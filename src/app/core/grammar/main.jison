@@ -34,6 +34,7 @@
 "function"          return 'R_FUNCTION';
 "execute"           return 'R_EXECUTE';
 "load"              return 'R_LOAD';
+"return"            return 'R_RETURN';
 
 /* BOOLEANOS (case insensitive por las opciones) */
 "true"              return 'R_TRUE';
@@ -174,27 +175,20 @@ declaracion_arreglo
 
 /* --- FUNCIONES --- */
 funcion
-    : R_FUNCTION IDENTIFICADOR PAR_IZQ parametros PAR_DER LLAVE_IZQ inst_funcion LLAVE_DER
+    : R_FUNCTION IDENTIFICADOR PAR_IZQ parametros PAR_DER LLAVE_IZQ instrucciones LLAVE_DER
       { $$ = { tipo: 'FUNCION', id: $2, params: $4, cuerpo: $7 }; }
-    | R_FUNCTION IDENTIFICADOR PAR_IZQ PAR_DER LLAVE_IZQ inst_funcion LLAVE_DER
+    | R_FUNCTION IDENTIFICADOR PAR_IZQ PAR_DER LLAVE_IZQ instrucciones LLAVE_DER
       { $$ = { tipo: 'FUNCION', id: $2, params: [], cuerpo: $6 }; }
+    /* Soporte para funciones vacías */
+    | R_FUNCTION IDENTIFICADOR PAR_IZQ parametros PAR_DER LLAVE_IZQ LLAVE_DER
+      { $$ = { tipo: 'FUNCION', id: $2, params: $4, cuerpo: [] }; }
+    | R_FUNCTION IDENTIFICADOR PAR_IZQ PAR_DER LLAVE_IZQ LLAVE_DER
+      { $$ = { tipo: 'FUNCION', id: $2, params: [], cuerpo: [] }; }
     ;
 
 parametros
     : parametros COMA tipo IDENTIFICADOR { $1.push({ tipoParam: $3, id: $4 }); $$ = $1; }
     | tipo IDENTIFICADOR { $$ = [{ tipoParam: $1, id: $2 }]; }
-    ;
-
-inst_funcion
-    : inst_funcion inst_func { $1.push($2); $$ = $1; }
-    | inst_func { $$ = [$1]; }
-    ;
-
-inst_func
-    : R_EXECUTE SQL_QUERY PT_COMA 
-      { $$ = { tipo: 'SQL_EXEC', query: $2.replace(/`/g, "") }; }
-    | R_LOAD expresion PT_COMA 
-      { $$ = { tipo: 'LOAD', ruta: $2 }; }
     ;
 
 /* --- BLOQUE MAIN --- */
@@ -219,6 +213,10 @@ instruccion
     | for_stmt { $$ = $1; }
     | R_BREAK PT_COMA { $$ = { tipo: 'BREAK' }; }
     | R_CONTINUE PT_COMA { $$ = { tipo: 'CONTINUE' }; }
+    | R_RETURN expresion PT_COMA { $$ = { tipo: 'RETURN', valor: $2 }; }
+    | R_RETURN PT_COMA { $$ = { tipo: 'RETURN', valor: null }; }
+    | R_EXECUTE SQL_QUERY PT_COMA { $$ = { tipo: 'SQL_EXEC', query: $2.replace(/`/g, "") }; }
+    | R_LOAD expresion PT_COMA { $$ = { tipo: 'LOAD', ruta: $2 }; }
     ;
 
 /* --- ASIGNACIÓN Y COMPONENTES --- */
@@ -316,6 +314,8 @@ expresion
     | PAR_IZQ expresion PAR_DER     { $$ = $2; }
     | IDENTIFICADOR                 { $$ = { tipo: 'ACCESO_VAR', id: $1 }; }
     | IDENTIFICADOR COR_IZQ expresion COR_DER { $$ = { tipo: 'ACCESO_ARREGLO', id: $1, indice: $3 }; }
+    | IDENTIFICADOR PAR_IZQ lista_expresiones PAR_DER { $$ = { tipo: 'LLAMADA_FUNC', id: $1, argumentos: $3 }; }
+    | IDENTIFICADOR PAR_IZQ PAR_DER                   { $$ = { tipo: 'LLAMADA_FUNC', id: $1, argumentos: [] }; }
     | R_TRUE                        { $$ = { tipo: 'LITERAL', dataType: 'boolean', val: true }; }
     | R_FALSE                       { $$ = { tipo: 'LITERAL', dataType: 'boolean', val: false }; }
     | ENTERO                        { $$ = { tipo: 'LITERAL', dataType: 'int', val: parseInt($1) }; }

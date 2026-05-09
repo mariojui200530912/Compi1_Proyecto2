@@ -8,6 +8,8 @@
   line-height: 1.5;
   border-right: 1px solid #3e4451;
   padding-top: 16px;
+  height: 100%;      
+  overflow-y: hidden;
 }
 
 .editor-layer {

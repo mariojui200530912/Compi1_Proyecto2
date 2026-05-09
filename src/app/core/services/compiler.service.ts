@@ -359,6 +359,13 @@ export class CompilerService {
           ultimoResultado = await this.ejecutarSQLInyectado(inst.query, tabla);
           break;
 
+        case 'RETURN':
+          if (inst.valor) {
+             return await this.evaluarExpresion(inst.valor, tabla);
+          }
+          return null;
+        break;  
+
         case 'LOAD':
           const rutaArchivo = await this.evaluarExpresion(inst.ruta, tabla);
           const contenidoArchivoY = this.fileService.resolveImportPath('', rutaArchivo);
@@ -477,6 +484,31 @@ export class CompilerService {
           return !(await this.evaluarExpresion(exp.val, tabla));
       }
     }
+
+    if (exp.tipo === 'LLAMADA_FUNC') {
+      const simFunc = this.globalST.get(exp.id);
+      
+      if (!simFunc || simFunc.type !== DataType.FUNCION) {
+        throw new Error(`La función '${exp.id}' no existe o no es invocable.`);
+      }
+
+      const funcionAST = simFunc.value;
+      const tablaLocal = new SymbolTable(this.globalST); // Creamos un nuevo entorno (scope)
+
+      if (exp.argumentos) {
+        for (let i = 0; i < exp.argumentos.length; i++) {
+          const valorArg = await this.evaluarExpresion(exp.argumentos[i], tabla);
+          const paramDef = funcionAST.params[i];
+          
+          if (paramDef) {
+            tablaLocal.declare(paramDef.id, new Symbol(paramDef.id, paramDef.tipoParam, valorArg, 0, 0, 'Llamada'));
+          }
+        }
+      }
+
+      return await this.ejecutarBloque(funcionAST.cuerpo, tablaLocal, 'Llamada_Funcion');
+    }
+
     return null;
   }
 
