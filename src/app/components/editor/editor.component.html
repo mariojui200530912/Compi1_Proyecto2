@@ -25,37 +25,38 @@
         </div>
       </div>
 
-      <div class="controls px-2 d-flex gap-2">
+      <div class="controls px-2 d-flex gap-1 align-items-center flex-nowrap">
         <button
           class="btn btn-outline-info btn-sm"
           (click)="showColorPicker.set(!showColorPicker())"
         >
-          🎨 Color
+          🎨
         </button>
 
-        <app-color-picker
-          *ngIf="showColorPicker()"
-          (colorSelected)="insertColorToEditor($event)"
-          (close)="showColorPicker.set(false)"
-        >
-        </app-color-picker>
-        <button class="btn btn-outline-light btn-sm" (click)="togglePreview()">
-          {{ showPreview() ? '✕ Ocultar Preview' : '👁 Mostrar Preview' }}
+        <button class="btn btn-outline-light btn-sm text-nowrap" (click)="togglePreview()">
+          {{ showPreview() ? '✕' : '👁 Preview' }}
         </button>
-        <button class="btn btn-success btn-sm px-3 fw-bold" (click)="onCompile()">
+
+        <button
+          *ngIf="compilacionExitosa()"
+          class="btn btn-outline-primary btn-sm animate__animated animate__fadeIn"
+          (click)="downloadProject()"
+        >
+          📥
+        </button>
+
+        <button class="btn btn-success btn-sm fw-bold text-nowrap" (click)="onCompile()">
           ▶ Compilar
         </button>
       </div>
     </div>
-
     <div class="flex-grow-1 d-flex overflow-hidden" style="min-height: 0">
       <ng-container *ngIf="fileService.activeFile() as file; else sinArchivo">
         <div [class]="showPreview() ? 'col-6' : 'col-12'" class="h-100 border-end border-secondary">
           <app-code-editor
             [(content)]="file.content"
             (contentChange)="fileService.updateActiveFileContent($event)"
-          >
-          </app-code-editor>
+          ></app-code-editor>
         </div>
 
         <div *ngIf="showPreview()" class="col-6 h-100">
@@ -65,7 +66,7 @@
 
       <ng-template #sinArchivo>
         <div
-          class="flex-grow-1 d-flex flex-column align-items-center justify-content-center bg-editor-empty"
+          class="flex-grow-1 d-flex flex-column align-items-center justify-content-center bg-editor-empty w-100"
         >
           <h1 class="display-1 opacity-10 fw-bold text-light">YFERA</h1>
           <p class="text-muted">Selecciona o crea un archivo para comenzar</p>
@@ -111,11 +112,9 @@
         <div *ngIf="activeBottomTab === 'errores'" class="p-2 h-100 overflow-auto">
           <app-error-report [errores]="listaErrores"></app-error-report>
         </div>
-
         <div *ngIf="activeBottomTab === 'simbolos'" class="p-2 h-100 overflow-auto">
           <app-symbol-table></app-symbol-table>
         </div>
-
         <div *ngIf="activeBottomTab === 'sql'" class="h-100 w-100">
           <app-sql-console></app-sql-console>
         </div>

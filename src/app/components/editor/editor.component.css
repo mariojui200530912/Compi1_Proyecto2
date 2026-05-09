@@ -1,6 +1,11 @@
 /* Layout Principal */
 .sidebar-bg { background-color: #252526; }
-.bg-toolbar { background-color: #2d2d2d; }
+.bg-toolbar { background-color: #2d2d2d; 
+              height: 40px; /* Altura fija para que no se mueva el editor */
+              display: flex;
+              overflow: hidden;
+            }
+
 .logo-area { height: 50px; background-color: #1e1e1e; }
 .bg-editor-empty { background-color: #1e1e1e; }
 
@@ -66,4 +71,50 @@
   min-height: 0; /* Esto es vital para que los hijos flex funcionen */
   display: flex;
   flex-direction: column;
+}
+
+/* Estilo para el botón de descarga */
+.btn-outline-primary {
+  color: #3498db;
+  border-color: #3498db;
+  transition: all 0.3s ease;
+}
+
+.btn-outline-primary:hover {
+  background-color: #3498db;
+  color: white;
+  box-shadow: 0 0 10px rgba(52, 152, 219, 0.4);
+}
+
+/* Animación de entrada para que no aparezca de golpe */
+.animate__fadeIn {
+  animation: fadeIn 0.4s ease-in-out;
+}
+
+.tabs-container {
+  flex: 1; 
+  min-width: 0; 
+  display: flex;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.controls {
+  flex-shrink: 0;
+  display: flex;
+  background-color: #2d2d2d; /* Color de la toolbar para que no se note el corte */
+  padding-left: 10px;
+}
+
+.btn-sm {
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  height: 28px;
+  display: flex;
+  align-items: center;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
 }

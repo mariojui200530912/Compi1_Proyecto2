@@ -1,17 +1,105 @@
-.explorer-item .action-buttons {
-  display: none;
-  background: rgba(0,0,0,0.5);
+/* Contenedor General */
+.explorer-container {
+  background-color: #252526;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.explorer-title {
+  color: #cccccc;
+  font-size: 0.75rem;
+  letter-spacing: 1px;
+}
+
+.bg-darker {
+  background-color: #1e1e1e;
+}
+
+.destination-text {
+  line-height: 24px;
+  max-width: 150px; /* Evita que empuje los botones si la ruta es muy larga */
+}
+
+/* Estilos Globales para Botones de Icono */
+.btn-icon {
+  color: #cccccc;
+  border: none;
+  background: transparent;
+  padding: 4px 6px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.btn-icon i {
+  font-size: 1rem;
+}
+
+.btn-icon:hover {
+  background-color: #3e3e42;
+  color: #ffffff !important;
+}
+
+/* Área del Árbol de Archivos */
+.explorer-tree {
+  /* Scrollbar estético para el explorador */
+  scrollbar-width: thin;
+  scrollbar-color: #424242 transparent;
+}
+
+.explorer-tree::-webkit-scrollbar { width: 8px; }
+.explorer-tree::-webkit-scrollbar-thumb { background-color: #424242; }
+
+/* Items Individuales (Archivos/Carpetas) */
+.explorer-item {
+  cursor: pointer;
+  color: #cccccc;
+  font-size: 0.9rem;
+  transition: background-color 0.1s;
+  user-select: none;
+  border-left: 2px solid transparent; /* Para el indicador de activo */
+}
+
+.explorer-item:hover {
+  background-color: #2a2d2e;
+  color: #ffffff;
+}
+
+.item-active {
+  background-color: #37373d !important;
+  color: #ffffff !important;
+  border-left-color: #007acc; /* Barra azul indicadora a la izquierda */
+}
+
+.item-name {
+  font-size: 0.85rem;
+}
+
+.tree-icon {
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+}
+
+/* Botones de Acción (Renombrar, Eliminar) flotantes */
+.action-buttons {
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease;
+  background-color: #2a2d2e; /* Mismo color que el hover del item */
   border-radius: 4px;
 }
 
 .explorer-item:hover .action-buttons {
-  display: flex;
+  opacity: 1;
+  visibility: visible;
 }
 
-.explorer-item:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+/* Evitamos que el hover del boton cambie el alto del item */
+.action-buttons .btn-icon {
+  padding: 2px 4px; 
 }
-
-.cursor-pointer {
-  cursor: pointer;
+.action-buttons .btn-icon i {
+  font-size: 0.85rem;
 }

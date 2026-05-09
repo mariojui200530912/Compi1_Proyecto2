@@ -1,49 +1,74 @@
-<div class="text-light h-100 overflow-auto">
+<div class="explorer-container h-100 d-flex flex-column text-light">
   
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h6 class="text-uppercase text-muted m-0">Explorador</h6>
-    
-    <div class="btn-group">
-      <button class="btn btn-outline-danger btn-sm" (click)="nuevoProyecto()" title="Nuevo Proyecto (Limpiar Todo)">✨</button>
+  <div class="explorer-header p-2 border-bottom border-secondary flex-shrink-0">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h6 class="text-uppercase explorer-title m-0 fw-bold">Explorador</h6>
       
-      <button class="btn btn-outline-light btn-sm" (click)="promptNewFile()" title="Nuevo Archivo">➕</button>
-      <button class="btn btn-outline-light btn-sm" (click)="promptNewFolder()" title="Nueva Carpeta">📁</button>
-      <button class="btn btn-outline-light btn-sm" (click)="fileInput.click()" title="Importar Archivos">📥</button>
-      <button class="btn btn-outline-success btn-sm border-start-0" (click)="guardarProyecto()" title="Guardar Proyecto">💾</button>
-      <button class="btn btn-outline-warning btn-sm" (click)="projectInput.click()" title="Cargar Proyecto">📂</button>
+      <div class="project-controls d-flex gap-1">
+        <button class="btn btn-icon btn-sm text-danger" (click)="nuevoProyecto()" title="Limpiar y crear nuevo proyecto">
+          <i class="bi bi-stars"></i>
+        </button>
+        <button class="btn btn-icon btn-sm text-success" (click)="guardarProyecto()" title="Guardar proyecto local">
+          <i class="bi bi-save2"></i>
+        </button>
+        <button class="btn btn-icon btn-sm text-warning" (click)="projectInput.click()" title="Cargar proyecto (.yfera)">
+          <i class="bi bi-folder2-open"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="file-controls d-flex justify-content-between bg-darker rounded p-1">
+      <div class="destination-text text-truncate small text-info px-1" title="{{ fileService.selectedFolderPath() || 'Raíz' }}">
+        Destino: <span class="text-white">{{ fileService.selectedFolderPath() || '/' }}</span>
+      </div>
+      <div class="d-flex gap-1">
+        <button class="btn btn-icon btn-sm" (click)="promptNewFile()" title="Nuevo Archivo">
+          <i class="bi bi-file-earmark-plus"></i>
+        </button>
+        <button class="btn btn-icon btn-sm" (click)="promptNewFolder()" title="Nueva Carpeta">
+          <i class="bi bi-folder-plus"></i>
+        </button>
+        <button class="btn btn-icon btn-sm" (click)="fileInput.click()" title="Importar Archivos">
+          <i class="bi bi-upload"></i>
+        </button>
+      </div>
     </div>
   </div>
 
   <input #fileInput type="file" (change)="onFileSelected($event)" multiple style="display: none;">
   <input #projectInput type="file" accept=".yfera,.json" (change)="cargarProyecto($event)" style="display: none;">
 
-  <div class="small text-info mb-2 border-bottom border-secondary pb-1">
-    Destino: <span class="text-white">{{ fileService.selectedFolderPath() }}</span>
-  </div>
-
-  <div *ngFor="let item of visibleFiles()" 
-       class="d-flex align-items-center py-1 pe-2 cursor-pointer explorer-item justify-content-between"
-       [style.padding-left.px]="(getDepth(item.path) * 20) + 10"
-       [class.bg-primary]="fileService.activeFile()?.path === item.path"
-       [class.bg-opacity-25]="fileService.activeFile()?.path === item.path"
-       (click)="selectItem(item)">
+  <div class="explorer-tree flex-grow-1 overflow-auto py-2">
     
-    <div class="d-flex align-items-center overflow-hidden">
-      <span class="me-2 text-warning" *ngIf="item.type === 'folder'">
-        {{ openFolders().has(item.path) ? '📂' : '📁' }}
-      </span>
-      <span class="me-2 text-info" *ngIf="item.type === 'file'">📄</span>
-      <span class="text-truncate" style="font-size: 0.85rem;">{{ item.name }}</span>
+    <div *ngFor="let item of visibleFiles()" 
+         class="explorer-item d-flex align-items-center justify-content-between py-1 pe-2"
+         [style.padding-left.px]="(getDepth(item.path) * 15) + 10"
+         [class.item-active]="fileService.activeFile()?.path === item.path"
+         (click)="selectItem(item)">
+      
+      <div class="d-flex align-items-center overflow-hidden">
+        
+        <span class="tree-icon text-warning me-2" *ngIf="item.type === 'folder'">
+          <i class="bi" [class.bi-chevron-down]="openFolders().has(item.path)" [class.bi-chevron-right]="!openFolders().has(item.path)"></i>
+          <i class="bi ms-1" [class.bi-folder2-open]="openFolders().has(item.path)" [class.bi-folder2]="!openFolders().has(item.path)"></i>
+        </span>
+        
+        <span class="tree-icon text-info me-2" *ngIf="item.type === 'file'">
+          <i class="bi bi-file-earmark-code"></i>
+        </span>
+        
+        <span class="item-name text-truncate">{{ item.name }}</span>
+      </div>
+
+      <div class="action-buttons d-flex gap-1">
+        <button class="btn btn-icon btn-sm p-0" (click)="renameItem($event, item)" title="Renombrar">
+          <i class="bi bi-pencil"></i>
+        </button>
+        <button class="btn btn-icon btn-sm p-0 text-danger" (click)="deleteItem($event, item.path)" title="Eliminar">
+          <i class="bi bi-trash3"></i>
+        </button>
+      </div>
     </div>
 
-    <div class="action-buttons shadow-sm">
-      <button class="btn btn-link btn-sm p-0 px-1 text-light text-decoration-none" (click)="renameItem($event, item)" title="Renombrar">
-        ✏️
-      </button>
-      <button class="btn btn-link btn-sm p-0 px-1 text-danger text-decoration-none" (click)="deleteItem($event, item.path)" title="Eliminar">
-        🗑️
-      </button>
-    </div>
   </div>
-
 </div>
