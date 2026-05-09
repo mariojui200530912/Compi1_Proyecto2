@@ -1,0 +1,49 @@
+<div class="terminal-main-container">
+  
+  <div #scrollContainer class="terminal-history">
+    <div *ngIf="sqlHistory().length === 0" class="terminal-welcome">
+      -- Terminal YFERA: Lista para recibir consultas SQL --
+    </div>
+
+    <div *ngFor="let item of sqlHistory()" class="terminal-entry">
+      <div class="terminal-query"><span class="terminal-prompt-char">></span> {{ item.query }}</div>
+      
+      <div *ngIf="item.result.type === 'success'" class="terminal-success">
+        {{ item.result.message }}
+      </div>
+      
+      <div *ngIf="item.result.type === 'error'" class="terminal-error">
+        {{ item.result.message }}
+      </div>
+      
+      <div *ngIf="item.result.type === 'data'" class="terminal-table-container">
+        <table class="yfera-table">
+          <thead>
+            <tr>
+              <th *ngFor="let col of item.result.columns">{{ col }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let row of item.result.values">
+              <td *ngFor="let val of row">{{ val }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  
+  <div class="terminal-input-bar" (click)="focusSqlInput()">
+    <span class="terminal-symbol">$</span>
+    <input id="sqlConsoleInput" 
+           type="text" 
+           class="terminal-field"
+           [(ngModel)]="sqlQuery" 
+           (keyup.enter)="ejecutarSQLConsole()" 
+           [disabled]="!dbService.isReady"
+           [placeholder]="dbService.isReady ? 'Escribe un comando SQL...' : 'Iniciando motor...'"
+           autocomplete="off"
+           spellcheck="false">
+  </div>
+
+</div>

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import initSqlJs from 'sql.js';
 
 @Injectable({
@@ -6,8 +6,13 @@ import initSqlJs from 'sql.js';
 })
 export class DatabaseService {
   private db: any;
-  private isReady: boolean = false;
+  public isReady: boolean = false;
   private SQL: any;
+  public sqlHistory = signal<{ query: string; result: any }[]>([]);
+
+  constructor() {
+    this.initDB(); 
+  }
 
   // Inicializa la base de datos en memoria cargando el archivo WASM de sql.js
   private async initDB() {
@@ -130,5 +135,13 @@ export class DatabaseService {
       this.db = new this.SQL.Database();
       console.log("Base de datos reiniciada para el nuevo proyecto.");
     }
+  }
+
+  agregarAlHistorial(query: string, result: any) {
+    this.sqlHistory.update(h => [...h, { query, result }]);
+  }
+
+  limpiarHistorial() {
+    this.sqlHistory.set([]);
   }
 }

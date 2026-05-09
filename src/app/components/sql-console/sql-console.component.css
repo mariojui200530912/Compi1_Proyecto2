@@ -1,0 +1,100 @@
+:host {
+  display: block;
+  height: 100%;
+  width: 100%;
+  position: relative;
+  background-color: #0c0c0c;
+  color: #ffffff;
+  font-family: 'Fira Code', 'Consolas', monospace;
+}
+
+.terminal-main-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.terminal-history {
+  flex: 1;
+  overflow-y: auto;
+  padding: 15px;
+  padding-bottom: 50px; /* Espacio para que el input no tape la última línea */
+}
+
+.terminal-welcome {
+  color: #5c6370;
+  font-style: italic;
+  font-size: 0.8rem;
+}
+
+.terminal-query { color: #61afef; margin-bottom: 5px; }
+.terminal-prompt-char { color: #98c379; margin-right: 8px; }
+.terminal-success { color: #98c379; font-size: 0.85rem; margin-left: 15px; }
+.terminal-error { color: #e06c75; font-size: 0.85rem; margin-left: 15px; }
+
+/* Barra de Entrada */
+.terminal-input-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  background-color: #050505;
+  border-top: 1px solid #333;
+  display: flex;
+  align-items: center;
+  padding: 0 15px;
+  z-index: 100;
+}
+
+.terminal-symbol {
+  color: #e06c75;
+  font-weight: bold;
+  margin-right: 10px;
+}
+
+.terminal-field {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #ffffff;
+  outline: none;
+  font-family: inherit;
+  font-size: 0.9rem;
+}
+
+/* Tabla interna de resultados */
+.terminal-table-container {
+  margin: 10px 0 10px 15px;
+  border: 1px solid #3e4451;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.yfera-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.yfera-table th {
+  background-color: #21252b;
+  color: #d19a66;
+  padding: 5px 10px;
+  text-align: left;
+}
+
+.yfera-table td {
+  padding: 4px 10px;
+  border-top: 1px solid #3e4451;
+}
+
+/* sql-console.component.css */
+.terminal-field {
+  caret-color: #00ff00; /* Cursor verde neón */
+}
+
+.terminal-field:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}

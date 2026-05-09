@@ -1,38 +1,25 @@
-<div class="table-container shadow-lg rounded">
-  <table class="table table-dark table-hover mb-0">
-    <thead class="table-secondary text-dark">
+<div class="table-responsive">
+  <table class="table yfera-table table-dark m-0">
+    <thead>
       <tr>
-        <th>#</th>
-        <th>Lexema / Token</th>
-        <th>Archivo</th>
-        <th>Línea</th>
-        <th>Columna</th>
-        <th>Tipo de Error</th>
+        <th style="width: 50px;">#</th>
+        <th class="text-danger">Token</th>
+        <th class="text-warning">Tipo Error</th>
         <th>Descripción</th>
+        <th class="text-center">Ubicación</th>
       </tr>
     </thead>
-    <tbody class="bg-error">
+    <tbody>
       <tr *ngFor="let err of errores; let i = index">
-        <td>{{ i + 1 }}</td>
-        <td class="fw-bold text-info">` {{ err.lexema }} `</td>
-        <td><span class="badge bg-secondary">{{ err.archivo }}</span></td>
-        <td>{{ err.linea }}</td>
-        <td>{{ err.columna }}</td>
-        <td>
-          <span [ngClass]="{
-            'text-lexico': err.tipo === 'Léxico',
-            'text-sintactico': err.tipo === 'Sintáctico',
-            'text-semantico': err.tipo === 'Semántico'
-          }">
-            {{ err.tipo }}
-          </span>
+        <td class="text-muted">{{ i + 1 }}</td>
+        <td class="text-danger"><code>{{ err.lexema }}</code></td>
+        <td class="small">{{ err.tipo }}</td>
+        <td class="col-expand text-muted small">
+          {{ err.descripcion }}
         </td>
-        <td class="fst-italic text-secondary">{{ err.descripcion }}</td>
-      </tr>
-      <!-- Fila si no hay errores -->
-      <tr *ngIf="errores.length === 0">
-        <td colspan="6" class="text-center text-success py-3">
-          ¡Sin errores detectados! El código es válido.
+        <td class="text-center">
+          <span class="file-badge me-2">{{ err.archivo }}</span>
+          <small class="text-muted">{{ err.linea }}:{{ err.columna }}</small>
         </td>
       </tr>
     </tbody>

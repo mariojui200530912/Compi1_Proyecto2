@@ -1,0 +1,23 @@
+<div class="preview-wrapper h-100 d-flex flex-column bg-white">
+  <div class="browser-bar d-flex align-items-center px-3 py-1 bg-light border-bottom">
+    <div class="dots d-flex gap-1 me-3">
+      <span class="dot bg-danger"></span>
+      <span class="dot bg-warning"></span>
+      <span class="dot bg-success"></span>
+    </div>
+    <div class="address-bar flex-grow-1 bg-white border rounded px-2 py-0 text-muted" style="font-size: 0.7rem;">
+      localhost:4200/yfera-preview
+    </div>
+  </div>
+
+  <div class="preview-content flex-grow-1 overflow-auto">
+    <div [innerHTML]="safeHtml"></div>
+    
+    <div *ngIf="!html" class="d-flex h-100 align-items-center justify-content-center text-muted opacity-50">
+      <div class="text-center">
+        <i class="display-4">🌐</i>
+        <p class="mt-2">Presiona "Compilar" para ver resultados</p>
+      </div>
+    </div>
+  </div>
+</div>

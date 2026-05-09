@@ -1,36 +1,29 @@
-<div class="table-responsive w-100 h-100 p-0 m-0">
-  <table class="table table-dark table-striped table-hover table-sm m-0 text-start" style="font-size: 0.85rem;">
-    
-    <thead style="position: sticky; top: 0; z-index: 1; background-color: #212529;">
+<div class="table-responsive">
+  <table class="table yfera-table table-dark m-0">
+    <thead>
       <tr>
-        <th scope="col" class="text-secondary ps-3">#</th>
-        <th scope="col" class="text-warning">ID (Nombre)</th>
-        <th scope="col" class="text-info">Tipo</th>
-        <th scope="col" class="text-success">Valor Actual</th>
-        <th scope="col" class="text-muted">Archivo</th>
-        <th scope="col" class="text-muted">Línea</th>
-        <th scope="col" class="text-muted">Columna</th>
+        <th style="width: 50px;">#</th>
+        <th class="text-warning">Identificador</th>
+        <th class="text-info">Tipo de Dato</th>
+        <th>Valor Actual</th>
+        <th class="text-center">Ubicación</th>
       </tr>
     </thead>
-
     <tbody>
-      
-      <tr *ngFor="let sim of simbolos; let i = index">
-        <th scope="row" class="text-secondary ps-3">{{ i + 1 }}</th>
-        <td class="fw-bold">{{ sim.id }}</td>
-        <td><span class="badge bg-secondary">{{ sim.type }}</span></td>
-        <td class="text-light font-monospace">{{ sim.value !== null ? sim.value : 'NULL' }}</td>
-        <td class="text-muted">{{ sim.archivo }}</td>
-        <td class="text-muted">{{ sim.line }}</td>
-        <td class="text-muted">{{ sim.column }}</td>
-      </tr>
-
-      <tr *ngIf="simbolos.length === 0">
-        <td colspan="6" class="text-center text-muted py-4 font-italic">
-          -- No hay variables o símbolos declarados en la compilación actual --
+      <tr *ngFor="let sym of simbolos; let i = index">
+        <td class="text-muted">{{ i + 1 }}</td>
+        <td class="fw-bold text-light">{{ sym.id }}</td>
+        <td>
+          <code class="text-info">{{ sym.type }}</code>
+        </td>
+        <td class="col-expand">
+          <code class="text-success">{{ formatValue(sym.value) }}</code>
+        </td>
+        <td class="text-center">
+          <span class="file-badge me-2">{{ sym.archivo || 'main.y' }}</span>
+          <small class="text-muted">{{ sym.line }}:{{ sym.column }}</small>
         </td>
       </tr>
-
     </tbody>
   </table>
 </div>

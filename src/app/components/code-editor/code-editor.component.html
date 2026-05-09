@@ -1,0 +1,25 @@
+<div class="code-editor-container d-flex h-100 overflow-hidden">
+  
+  <div #lineNumbersDiv 
+       class="line-numbers user-select-none font-monospace flex-shrink-0 text-end pe-3">
+    <div *ngFor="let line of lines" class="line-number">{{ line }}</div>
+  </div>
+
+  <div class="editor-main-area flex-grow-1 position-relative">
+    
+    <div class="editor-layer editor-highlight font-monospace" 
+         [innerHTML]="content | highlightYfera">
+    </div>
+
+    <textarea #editorTextarea 
+              class="editor-layer editor-input font-monospace shadow-none" 
+              [ngModel]="content" 
+              (ngModelChange)="onTextChange($event)" 
+              (scroll)="syncScroll()" 
+              (keydown)="handleKeydown($event)"
+              spellcheck="false" 
+              wrap="off">
+    </textarea>
+    
+  </div>
+</div>

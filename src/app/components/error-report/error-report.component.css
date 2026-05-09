@@ -1,0 +1,45 @@
+:host { display: block; height: 100%; background-color: #1e1e1e; }
+
+.table-responsive { height: 100%; overflow: auto; }
+
+.yfera-table {
+  width: 100% !important;
+  min-width: 800px;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.yfera-table thead th {
+  position: sticky;
+  top: 0;
+  background-color: #252526 !important;
+  color: #ffffff;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  padding: 12px;
+  border-bottom: 2px solid #3e4451 !important;
+  z-index: 10;
+}
+
+.yfera-table tbody tr:hover { background-color: #2a2d2e !important; }
+
+.yfera-table td {
+  padding: 10px;
+  border-bottom: 1px solid #333;
+  vertical-align: middle;
+  font-size: 0.85rem;
+}
+
+.col-expand {
+  white-space: normal;
+  word-wrap: break-word;
+  max-width: 400px;
+}
+
+.file-badge {
+  background-color: #3e4451;
+  color: #85c1e9;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+}

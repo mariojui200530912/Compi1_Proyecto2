@@ -1,0 +1,19 @@
+:host { display: block; height: 100%; }
+
+.preview-wrapper {
+  background-color: #ffffff;
+  box-shadow: inset 2px 0 5px rgba(0,0,0,0.1);
+}
+
+.browser-bar {
+  height: 35px;
+  background-color: #f3f3f3;
+  user-select: none;
+}
+
+.dot { width: 10px; height: 10px; border-radius: 50%; }
+
+.preview-content {
+  padding: 0;
+  color: #000;
+}

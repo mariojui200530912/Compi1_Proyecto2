@@ -1,82 +1,69 @@
-.editor-container {
-  height: 100%;
+/* Layout Principal */
+.sidebar-bg { background-color: #252526; }
+.bg-toolbar { background-color: #2d2d2d; }
+.logo-area { height: 50px; background-color: #1e1e1e; }
+.bg-editor-empty { background-color: #1e1e1e; }
+
+/* Pestañas de Archivos (Superiores) */
+.tab-item {
+  background-color: #2d2d2d;
+  color: #969696;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+  min-width: 120px;
+  border-top: 2px solid transparent;
+  user-select: none;
+}
+
+.tab-item:hover {
+  background-color: #323233;
+  color: #ccc;
+}
+
+.active-tab {
+  background-color: #1e1e1e !important;
+  color: white !important;
+  border-top: 2px solid #007acc !important;
+}
+
+.close-icon {
+  margin-left: 10px;
+  padding: 0 4px;
+  border-radius: 3px;
+}
+
+.close-icon:hover {
+  background-color: #454545;
+  color: #ff5f56 !important;
+}
+
+/* Pestañas de Diagnóstico (Inferiores) */
+.nav-tabs { border-bottom: 1px solid #3e4451; }
+
+.nav-tabs .nav-link {
+  color: #888;
+  border: none;
+  border-radius: 0;
+  font-size: 0.8rem;
+  padding: 8px 20px;
+}
+
+.nav-tabs .nav-link.active {
+  background-color: #1e1e1e !important;
+  color: #007acc !important;
+  border-bottom: 2px solid #007acc !important;
+}
+
+.bottom-area {
+  background-color: #1e1e1e;
+  height: 35%; /* O el tamaño que prefieras */
   display: flex;
   flex-direction: column;
 }
 
-.code-area {
-  position: relative;
-  height: 100%; /* Ahora respetará el tamaño sin invadir la consola */
-  background-color: #282c34;
-  font-family: 'Fira Code', 'Courier New', monospace;
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-.editor-input, .editor-highlight {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  padding: 10px;
-  border: none;
-  overflow: auto;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  background: transparent;
-}
-
-.editor-input {
-  z-index: 2;
-  color: #cccccc; /* El texto real es invisible */
-  caret-color: white; /* Pero el cursor es visible */
-  resize: none;
-}
-
-.editor-highlight {
-  display: none;
-  z-index: 1;
-  color: #abb2bf; /* Color base del texto resaltado */
-  pointer-events: none; /* No interfiere con el click en el textarea */
-}
-
-.text-purple { color: #c678dd; }
-
-.text-green { color: #98c379; }
-
-.text-orange { color: #d19a66; }
-
-.text-light-blue { color: #61afef; }
-
-.text-blue { color: #56b6c2; }
-
-.y-purple { color: #c678dd; font-weight: bold; } /* Reservadas */
-.y-green { color: #98c379; }                    /* Operadores */
-.y-orange { color: #d19a66; }                   /* Strings */
-.y-blue-light { color: #61afef; }               /* Números / Literales */
-.y-blue-dark { color: #56b6c2; }                /* Llaves, paréntesis, corchetes */
-.y-white { color: #ffffff; }                    /* Variables e Identificadores */
-.y-gray { color: #5c6370; font-style: italic; } /* Comentarios */
-
-#sqlConsoleInput {
-  position: relative;
-  z-index: 20;
-  pointer-events: auto !important;
-}
-
-/* Evita que elementos absolutos bloqueen la consola */
-.code-area {
-  pointer-events: auto;
-}
-
-.nav-tabs .nav-link.active {
-  background-color: #212529 !important; /* Equivalente a bg-dark */
-  color: #f8f9fa !important; /* Texto blanco */
-  border-color: #6c757d #6c757d #212529 !important; /* Bordes grises */
-}
-
-.nav-tabs .nav-link:hover {
-  border-color: #6c757d #6c757d transparent !important;
+.tab-content-wrapper {
+  flex: 1;
+  min-height: 0; /* Esto es vital para que los hijos flex funcionen */
+  display: flex;
+  flex-direction: column;
 }

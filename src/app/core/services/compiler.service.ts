@@ -70,7 +70,14 @@ export class CompilerService {
           if (imp.endsWith('.styles')) this.processStyles(content, imp);
           if (imp.endsWith('.comp')) this.processComponents(content, imp);
         } else {
-          this.registrarError(imp, 0, 0, 'Semántico', 'No se encontró el archivo importado', 'main.y');
+          this.registrarError(
+            imp,
+            0,
+            0,
+            'Semántico',
+            'No se encontró el archivo importado',
+            'main.y',
+          );
         }
       }
 
@@ -79,7 +86,7 @@ export class CompilerService {
         await this.ejecutarBloque(ast.globales, this.globalST);
       }
 
-      // Ejecutar bloque Main 
+      // Ejecutar bloque Main
       let dataResultado = null;
       if (ast.main && ast.main.cuerpo) {
         dataResultado = await this.ejecutarBloque(ast.main.cuerpo, this.globalST);
@@ -106,7 +113,17 @@ export class CompilerService {
       }
       return { success: true, data: ultimoResultado ? [ultimoResultado] : null };
     } catch (e: any) {
-      this.registrarError(comando, 0, 0, 'Sintáctico', 'Error en comando de consola: ' + e.message);
+      const desc = e.hash
+        ? `Error cerca de '${e.hash.text}'. Se esperaba: ${e.hash.expected.join(', ')}`
+        : e.message;
+
+      this.registrarError(
+        e.hash?.token || 'Error',
+        (e.hash?.line || 0) + 1,
+        e.hash?.loc?.first_column || 0,
+        'Sintáctico',
+        desc,
+      );
       return { success: false, errores: this.reporteErrores };
     }
   }
@@ -128,7 +145,13 @@ export class CompilerService {
             typeof simbolo.value === 'string' ? `"${simbolo.value}"` : simbolo.value;
           queryFinal = queryFinal.replace(varConDolar, valorAInyectar);
         } else {
-          this.registrarError(varConDolar, 0, 0, 'Semántico', `Variable ${varConDolar} no definida`);
+          this.registrarError(
+            varConDolar,
+            0,
+            0,
+            'Semántico',
+            `Variable ${varConDolar} no definida`,
+          );
         }
       }
     }
@@ -186,7 +209,10 @@ export class CompilerService {
 
         case 'DEC_ARREGLO_SQL':
           const resSql = await this.ejecutarSQLInyectado(inst.query, tabla);
-          tabla.declare(inst.id, new Symbol(inst.id, inst.dataType as DataType, resSql || [], 0, 0));
+          tabla.declare(
+            inst.id,
+            new Symbol(inst.id, inst.dataType as DataType, resSql || [], 0, 0),
+          );
           break;
 
         case 'FUNCION':
@@ -229,12 +255,22 @@ export class CompilerService {
               for (const arg of inst.argumentos) {
                 argsEvaluados.push(await this.evaluarExpresion(arg, tabla));
               }
-              
+
               // ¡AQUÍ ESTÁ LA MAGIA! Llamamos al nuevo ComponentsService
-              const compHTML = await this.componentsService.renderizarComponente(componenteAST, argsEvaluados, tabla);
+              const compHTML = await this.componentsService.renderizarComponente(
+                componenteAST,
+                argsEvaluados,
+                tabla,
+              );
               this.htmlGenerado += compHTML;
             } catch (error: any) {
-              this.registrarError(inst.id, 0, 0, 'Semántico', `Error al renderizar componente: ${error.message}`);
+              this.registrarError(
+                inst.id,
+                0,
+                0,
+                'Semántico',
+                `Error al renderizar componente: ${error.message}`,
+              );
             }
           } else {
             this.registrarError(inst.id, 0, 0, 'Semántico', `Componente ${inst.id} no encontrado`);
@@ -247,26 +283,38 @@ export class CompilerService {
 
         case 'LOAD':
           const rutaArchivo = await this.evaluarExpresion(inst.ruta, tabla);
-          
-          const contenidoArchivoY = this.fileService.resolveImportPath('', rutaArchivo); 
-          
+
+          const contenidoArchivoY = this.fileService.resolveImportPath('', rutaArchivo);
+
           if (contenidoArchivoY) {
             try {
               const astNuevoY = MainParser.parse(contenidoArchivoY);
-              
+
               if (astNuevoY.globales && astNuevoY.globales.length > 0) {
                 await this.ejecutarBloque(astNuevoY.globales, this.globalST);
               }
               if (astNuevoY.main && astNuevoY.main.cuerpo) {
                 ultimoResultado = await this.ejecutarBloque(astNuevoY.main.cuerpo, this.globalST);
               }
-              
+
               console.log(`Archivo ${rutaArchivo} cargado y ejecutado con éxito.`);
             } catch (error: any) {
-              this.registrarError(rutaArchivo, 0, 0, 'Sintáctico', `Error al parsear el archivo cargado: ${error.message}`);
+              this.registrarError(
+                rutaArchivo,
+                0,
+                0,
+                'Sintáctico',
+                `Error al parsear el archivo cargado: ${error.message}`,
+              );
             }
           } else {
-            this.registrarError(rutaArchivo, 0, 0, 'Semántico', `No se encontró el archivo .y para cargar`);
+            this.registrarError(
+              rutaArchivo,
+              0,
+              0,
+              'Semántico',
+              `No se encontró el archivo .y para cargar`,
+            );
           }
           break;
       }
@@ -298,12 +346,18 @@ export class CompilerService {
       const left = await this.evaluarExpresion(exp.left, tabla);
       const right = await this.evaluarExpresion(exp.right, tabla);
       switch (exp.op) {
-        case '+': return left + right;
-        case '-': return left - right;
-        case '*': return left * right;
-        case '/': return right !== 0 ? left / right : 0;
-        case '%': return left % right;
-        case 'UNARIO': return -(await this.evaluarExpresion(exp.val, tabla));
+        case '+':
+          return left + right;
+        case '-':
+          return left - right;
+        case '*':
+          return left * right;
+        case '/':
+          return right !== 0 ? left / right : 0;
+        case '%':
+          return left % right;
+        case 'UNARIO':
+          return -(await this.evaluarExpresion(exp.val, tabla));
       }
     }
 
@@ -311,12 +365,18 @@ export class CompilerService {
       const left = await this.evaluarExpresion(exp.left, tabla);
       const right = await this.evaluarExpresion(exp.right, tabla);
       switch (exp.op) {
-        case '==': return left == right;
-        case '!=': return left != right;
-        case '>': return left > right;
-        case '<': return left < right;
-        case '>=': return left >= right;
-        case '<=': return left <= right;
+        case '==':
+          return left == right;
+        case '!=':
+          return left != right;
+        case '>':
+          return left > right;
+        case '<':
+          return left < right;
+        case '>=':
+          return left >= right;
+        case '<=':
+          return left <= right;
       }
     }
 
@@ -324,22 +384,32 @@ export class CompilerService {
       const left = exp.left ? await this.evaluarExpresion(exp.left, tabla) : null;
       const right = exp.right ? await this.evaluarExpresion(exp.right, tabla) : null;
       switch (exp.op) {
-        case '&&': return left && right;
-        case '||': return left || right;
-        case '!': return !(await this.evaluarExpresion(exp.val, tabla));
+        case '&&':
+          return left && right;
+        case '||':
+          return left || right;
+        case '!':
+          return !(await this.evaluarExpresion(exp.val, tabla));
       }
     }
     return null;
   }
 
-  private registrarError(lex: string, lin: number, col: number, tipo: string, desc: string, archivo: string = 'main.y') {
+  private registrarError(
+    lex: string,
+    lin: number,
+    col: number,
+    tipo: string,
+    desc: string,
+    archivo: string = 'main.y',
+  ) {
     this.reporteErrores.push({
       lexema: lex,
       linea: lin,
       columna: col,
       tipo: tipo,
       descripcion: desc,
-      archivo: archivo // <--- Guardamos el archivo
+      archivo: archivo, // <--- Guardamos el archivo
     });
   }
 
@@ -362,20 +432,26 @@ export class CompilerService {
 
         if (existe) {
           this.registrarError(
-            nuevoComp.nombre, 
-            0, 
-            0, 
-            'Semántico', 
-            `El componente '${nuevoComp.nombre}' ya fue declarado. Los nombres de componentes no se pueden repetir.`, 
-            nombreArchivo
+            nuevoComp.nombre,
+            0,
+            0,
+            'Semántico',
+            `El componente '${nuevoComp.nombre}' ya fue declarado. Los nombres de componentes no se pueden repetir.`,
+            nombreArchivo,
           );
         } else {
           this.astComponentes.push(nuevoComp);
         }
       }
-
     } catch (e: any) {
-      this.registrarError('Importación', 0, 0, 'Sintáctico', 'Error en archivo .comp: ' + e.message, nombreArchivo);
+      this.registrarError(
+        'Importación',
+        0,
+        0,
+        'Sintáctico',
+        'Error en archivo .comp: ' + e.message,
+        nombreArchivo,
+      );
     }
   }
 

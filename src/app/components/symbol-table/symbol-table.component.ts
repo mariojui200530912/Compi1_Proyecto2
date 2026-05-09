@@ -8,11 +8,11 @@ import { Symbol } from '../../core/models/symbol-table';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './symbol-table.component.html',
-  styleUrls: ['./symbol-table.component.css']
+  styleUrls: ['./symbol-table.component.css'],
 })
 export class SymbolTableComponent implements OnInit {
   private compilerService = inject(CompilerService);
-  
+
   // Arreglo donde guardaremos los símbolos para el HTML
   public simbolos: Symbol[] = [];
 
@@ -23,5 +23,13 @@ export class SymbolTableComponent implements OnInit {
   // Este método es llamado automáticamente por el EditorComponent al compilar
   public actualizarTabla() {
     this.simbolos = this.compilerService.getSimbolosActuales();
+  }
+
+  formatValue(val: any): string {
+    if (val === null) return 'null';
+    if (val === undefined) return 'void';
+    if (Array.isArray(val)) return `Array(${val.length})`;
+    if (typeof val === 'object') return '{...}';
+    return String(val);
   }
 }
