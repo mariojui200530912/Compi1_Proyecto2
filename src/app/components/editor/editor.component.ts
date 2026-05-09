@@ -41,7 +41,7 @@ export class EditorComponent {
 
   // Estado de la interfaz
   public listaErrores: any[] = [];
-  public showPreview = signal(true);
+  public showPreview = signal(false);
   public previewHtml = '';
   public activeBottomTab: 'errores' | 'simbolos' | 'sql' = 'errores';
 

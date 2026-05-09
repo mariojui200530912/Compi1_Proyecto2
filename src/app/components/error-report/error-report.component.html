@@ -2,24 +2,37 @@
   <table class="table yfera-table table-dark m-0">
     <thead>
       <tr>
-        <th style="width: 50px;">#</th>
+        <th style="width: 40px;" class="text-muted">#</th>
         <th class="text-danger">Token</th>
         <th class="text-warning">Tipo Error</th>
         <th>Descripción</th>
-        <th class="text-center">Ubicación</th>
+        <th class="text-center text-info" style="width: 80px;">Fila</th>
+        <th class="text-center text-info" style="width: 80px;">Col</th>
+        <th class="text-center">Archivo</th>
       </tr>
     </thead>
     <tbody>
       <tr *ngFor="let err of errores; let i = index">
         <td class="text-muted">{{ i + 1 }}</td>
-        <td class="text-danger"><code>{{ err.lexema }}</code></td>
+        
+        <td class="text-danger fw-bold"><code>{{ err.lexema }}</code></td>
+        
         <td class="small">{{ err.tipo }}</td>
-        <td class="col-expand text-muted small">
-          {{ err.descripcion }}
+        
+        <td class="col-expand text-light small" style="white-space: pre-wrap; word-break: break-word;">
+          {{ err.descripcion || '⚠️ Jison no envió descripción' }}
         </td>
+        
+        <td class="text-center fw-bold text-light bg-darker">
+          {{ err.linea }}
+        </td>
+        
+        <td class="text-center fw-bold text-light bg-darker">
+          {{ err.columna }}
+        </td>
+        
         <td class="text-center">
-          <span class="file-badge me-2">{{ err.archivo }}</span>
-          <small class="text-muted">{{ err.linea }}:{{ err.columna }}</small>
+          <span class="badge bg-secondary border border-secondary">{{ err.archivo }}</span>
         </td>
       </tr>
     </tbody>

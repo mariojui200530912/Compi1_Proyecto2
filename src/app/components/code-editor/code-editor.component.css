@@ -23,6 +23,8 @@
   white-space: pre;
   overflow: auto;
   box-sizing: border-box;
+  margin: 0; 
+  border: none;
 }
 
 .editor-input {
@@ -37,8 +39,10 @@
 
 .editor-highlight {
   z-index: 1;
-  pointer-events: none;
+  pointer-events: none; 
   color: #abb2bf;
+  user-select: none; 
+  -webkit-user-select: none;
 }
 
 .editor-highlight::-webkit-scrollbar { display: none; }

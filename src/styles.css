@@ -1,0 +1,7 @@
+.y-purple { color: #c678dd; font-weight: bold; }   /* Palabras Reservadas */
+.y-green { color: #98c379; }                       /* Operadores y booleanos */
+.y-orange { color: #d19a66; }                      /* Strings / Cadenas */
+.y-blue-light { color: #56b6c2; }                  /* Números */
+.y-blue-dark { color: #61afef; }                   /* Símbolos y Funciones */
+.y-gray { color: #5c6370; font-style: italic; }    /* Comentarios */
+.y-white { color: #abb2bf; }                       /* Variables normales */

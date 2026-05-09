@@ -5,11 +5,13 @@ import { StylesService } from './styles.service';
 import { ComponentsService } from './components.service';
 import { SymbolTable, DataType, Symbol } from '../models/symbol-table';
 
+// Importación de parsers generados por Jison
 declare var require: any;
 const MainParser = require('../grammar/main_parser.js');
 const StylesParser = require('../grammar/styles_parser.js');
 const ComponentsParser = require('../grammar/components_parser.js');
 const SQLParser = require('../grammar/sql_parser.js');
+const HighlighterLexer = require('../grammar/highlighter_lexer.js');
 
 @Injectable({
   providedIn: 'root',
@@ -29,6 +31,7 @@ export class CompilerService {
   ) {
     this.globalST = new SymbolTable();
 
+    // API inyectada para la comunicación entre la vista (HTML) y la lógica (YFERA)
     (window as any).YFERA_API = {
       ejecutar: async (nombreFuncion: string, valoresArgumentos: any[]) => {
         const simboloFuncion = this.globalST.get(nombreFuncion);
@@ -39,11 +42,18 @@ export class CompilerService {
           funcionAST.params.forEach((param: any, index: number) => {
             tablaLocal.declare(
               param.id,
-              new Symbol(param.id, param.tipoParam as DataType, valoresArgumentos[index], 0, 0),
+              new Symbol(
+                param.id,
+                param.tipoParam as DataType,
+                valoresArgumentos[index],
+                0,
+                0,
+                'API',
+              ),
             );
           });
 
-          await this.ejecutarBloque(funcionAST.cuerpo, tablaLocal);
+          await this.ejecutarBloque(funcionAST.cuerpo, tablaLocal, 'API');
           console.log(`Función ${nombreFuncion} ejecutada con éxito desde la vista.`);
         } else {
           alert(`Error: La función ${nombreFuncion} no existe en el archivo principal.`);
@@ -52,7 +62,7 @@ export class CompilerService {
     };
   }
 
-  // Punto de entrada principal para compilar un archivo .y
+  // --- PUNTO DE ENTRADA PRINCIPAL ---
   public async compile(sourceCode: string, filePath: string) {
     this.reporteErrores = [];
     this.globalST = new SymbolTable();
@@ -63,7 +73,6 @@ export class CompilerService {
     try {
       const ast = MainParser.parse(sourceCode);
 
-      // Procesar Imports
       for (const imp of ast.imports) {
         const content = this.fileService.resolveImportPath(filePath, imp);
         if (content) {
@@ -81,25 +90,34 @@ export class CompilerService {
         }
       }
 
-      // Ejecutar Variables y Funciones Globales
       if (ast.globales && ast.globales.length > 0) {
-        await this.ejecutarBloque(ast.globales, this.globalST);
+        await this.ejecutarBloque(ast.globales, this.globalST, filePath);
       }
 
-      // Ejecutar bloque Main
       let dataResultado = null;
       if (ast.main && ast.main.cuerpo) {
-        dataResultado = await this.ejecutarBloque(ast.main.cuerpo, this.globalST);
+        dataResultado = await this.ejecutarBloque(ast.main.cuerpo, this.globalST, filePath);
       }
 
       return { success: true, html: this.htmlGenerado, data: dataResultado };
     } catch (e: any) {
-      this.registrarError('Error Crítico', 0, 0, 'Sintáctico', e.message);
+      const textoError = e.message || String(e) || 'Error desconocido';
+      const desc = textoError.replace(/\r?\n|\r/g, ' ');
+
+      this.registrarError(
+        e.hash?.token || 'EOF',
+        (e.hash?.line || 0) + 1,
+        e.hash?.loc?.first_column || 0,
+        'Sintáctico',
+        desc,
+        filePath,
+      );
+
       return { success: false, errores: this.reporteErrores };
     }
   }
 
-  // Ejecuta comandos SQL directamente desde la consola
+  // --- EJECUCIÓN DE CONSOLA SQL ---
   public async ejecutarComandoConsola(comando: string) {
     this.reporteErrores = [];
     try {
@@ -114,8 +132,8 @@ export class CompilerService {
       return { success: true, data: ultimoResultado ? [ultimoResultado] : null };
     } catch (e: any) {
       const desc = e.hash
-        ? `Error cerca de '${e.hash.text}'. Se esperaba: ${e.hash.expected.join(', ')}`
-        : e.message;
+        ? `Error cerca de '${e.hash.text}'. Se esperaba: ${e.hash.expected?.join(', ') || 'otra instrucción'}`
+        : e.message || 'Error de sintaxis SQL';
 
       this.registrarError(
         e.hash?.token || 'Error',
@@ -123,12 +141,13 @@ export class CompilerService {
         e.hash?.loc?.first_column || 0,
         'Sintáctico',
         desc,
+        'Consola SQL',
       );
       return { success: false, errores: this.reporteErrores };
     }
   }
 
-  // Ejecuta la instrucción 'execute' inyectando SQL en SQLite
+  // --- EJECUCIÓN DE SQL INYECTADO ---
   private async ejecutarSQLInyectado(queryEnmascarada: string, tabla: SymbolTable) {
     let queryFinal = queryEnmascarada.replace(/`/g, '');
 
@@ -168,22 +187,44 @@ export class CompilerService {
     return null;
   }
 
-  // Procesa las instrucciones del bloque main, while, for, etc.
-  private async ejecutarBloque(instrucciones: any[], tabla: SymbolTable): Promise<any> {
+  // --- EJECUTOR PRINCIPAL DE BLOQUES (AST) ---
+  private async ejecutarBloque(
+    instrucciones: any[],
+    tabla: SymbolTable,
+    filePath: string,
+  ): Promise<any> {
     let ultimoResultado = null;
 
     for (const inst of instrucciones) {
       switch (inst.tipo) {
         case 'DECLARACION':
           const valor = await this.evaluarExpresion(inst.valor, tabla);
-          tabla.declare(inst.id, new Symbol(inst.id, inst.dataType as DataType, valor, 0, 0));
+          const simDecl = new Symbol(
+            inst.id,
+            inst.dataType as DataType,
+            valor,
+            inst.linea || 0,
+            inst.columna || 0,
+          );
+          // Inyectamos la ubicación para la tabla de símbolos (cubrimos ambas posibles nomenclaturas)
+          (simDecl as any).archivo = filePath;
+          (simDecl as any).ubicacion = filePath;
+          tabla.declare(inst.id, simDecl);
           break;
 
         case 'ASIGNACION':
           const nvoValor = await this.evaluarExpresion(inst.valor, tabla);
           const sim = tabla.get(inst.id);
           if (sim) sim.value = nvoValor;
-          else this.registrarError(inst.id, 0, 0, 'Semántico', 'Variable no declarada');
+          else
+            this.registrarError(
+              inst.id,
+              inst.linea || 0,
+              inst.columna || 0,
+              'Semántico',
+              'Variable no declarada',
+              filePath,
+            );
           break;
 
         case 'ASIGNACION_ARR':
@@ -195,55 +236,85 @@ export class CompilerService {
 
         case 'DEC_ARREGLO_TAM':
           const tam = await this.evaluarExpresion(inst.tamano, tabla);
-          tabla.declare(
+          const simArrTam = new Symbol(
             inst.id,
-            new Symbol(inst.id, inst.dataType as DataType, new Array(tam).fill(null), 0, 0),
+            inst.dataType as DataType,
+            new Array(tam).fill(null),
+            inst.linea || 0,
+            inst.columna || 0,
           );
+          (simArrTam as any).archivo = filePath;
+          (simArrTam as any).ubicacion = filePath;
+          tabla.declare(inst.id, simArrTam);
           break;
 
         case 'DEC_ARREGLO_LISTA':
           const valores = [];
           for (const exp of inst.valores) valores.push(await this.evaluarExpresion(exp, tabla));
-          tabla.declare(inst.id, new Symbol(inst.id, inst.dataType as DataType, valores, 0, 0));
+          const simArrList = new Symbol(
+            inst.id,
+            inst.dataType as DataType,
+            valores,
+            inst.linea || 0,
+            inst.columna || 0,
+          );
+          (simArrList as any).archivo = filePath;
+          (simArrList as any).ubicacion = filePath;
+          tabla.declare(inst.id, simArrList);
           break;
 
         case 'DEC_ARREGLO_SQL':
           const resSql = await this.ejecutarSQLInyectado(inst.query, tabla);
-          tabla.declare(
+          const simArrSql = new Symbol(
             inst.id,
-            new Symbol(inst.id, inst.dataType as DataType, resSql || [], 0, 0),
+            inst.dataType as DataType,
+            resSql || [],
+            inst.linea || 0,
+            inst.columna || 0,
           );
+          (simArrSql as any).archivo = filePath;
+          (simArrSql as any).ubicacion = filePath;
+          tabla.declare(inst.id, simArrSql);
           break;
 
         case 'FUNCION':
-          tabla.declare(inst.id, new Symbol(inst.id, DataType.FUNCION, inst, 0, 0));
+          const simFunc = new Symbol(
+            inst.id,
+            DataType.FUNCION,
+            inst,
+            inst.linea || 0,
+            inst.columna || 0,
+          );
+          (simFunc as any).archivo = filePath;
+          (simFunc as any).ubicacion = filePath;
+          tabla.declare(inst.id, simFunc);
           break;
 
         case 'IF':
           const condicionIf = await this.evaluarExpresion(inst.condicion, tabla);
           if (condicionIf) {
-            await this.ejecutarBloque(inst.cuerpo_verdadero, new SymbolTable(tabla));
+            await this.ejecutarBloque(inst.cuerpo_verdadero, new SymbolTable(tabla), filePath);
           } else if (inst.cuerpo_falso) {
             if (inst.cuerpo_falso.tipo === 'IF') {
-              await this.ejecutarBloque([inst.cuerpo_falso], tabla);
+              await this.ejecutarBloque([inst.cuerpo_falso], tabla, filePath);
             } else {
-              await this.ejecutarBloque(inst.cuerpo_falso.cuerpo, new SymbolTable(tabla));
+              await this.ejecutarBloque(inst.cuerpo_falso.cuerpo, new SymbolTable(tabla), filePath);
             }
           }
           break;
 
         case 'WHILE':
           while (await this.evaluarExpresion(inst.condicion, tabla)) {
-            await this.ejecutarBloque(inst.cuerpo, new SymbolTable(tabla));
+            await this.ejecutarBloque(inst.cuerpo, new SymbolTable(tabla), filePath);
           }
           break;
 
         case 'FOR':
           const localFor = new SymbolTable(tabla);
-          await this.ejecutarBloque([inst.inicializacion], localFor);
+          await this.ejecutarBloque([inst.inicializacion], localFor, filePath);
           while (await this.evaluarExpresion(inst.condicion, localFor)) {
-            await this.ejecutarBloque(inst.cuerpo, new SymbolTable(localFor));
-            await this.ejecutarBloque([inst.actualizacion], localFor);
+            await this.ejecutarBloque(inst.cuerpo, new SymbolTable(localFor), filePath);
+            await this.ejecutarBloque([inst.actualizacion], localFor, filePath);
           }
           break;
 
@@ -256,7 +327,6 @@ export class CompilerService {
                 argsEvaluados.push(await this.evaluarExpresion(arg, tabla));
               }
 
-              // ¡AQUÍ ESTÁ LA MAGIA! Llamamos al nuevo ComponentsService
               const compHTML = await this.componentsService.renderizarComponente(
                 componenteAST,
                 argsEvaluados,
@@ -266,14 +336,22 @@ export class CompilerService {
             } catch (error: any) {
               this.registrarError(
                 inst.id,
-                0,
-                0,
+                inst.linea || 0,
+                inst.columna || 0,
                 'Semántico',
                 `Error al renderizar componente: ${error.message}`,
+                filePath,
               );
             }
           } else {
-            this.registrarError(inst.id, 0, 0, 'Semántico', `Componente ${inst.id} no encontrado`);
+            this.registrarError(
+              inst.id,
+              inst.linea || 0,
+              inst.columna || 0,
+              'Semántico',
+              `Componente ${inst.id} no encontrado`,
+              filePath,
+            );
           }
           break;
 
@@ -283,7 +361,6 @@ export class CompilerService {
 
         case 'LOAD':
           const rutaArchivo = await this.evaluarExpresion(inst.ruta, tabla);
-
           const contenidoArchivoY = this.fileService.resolveImportPath('', rutaArchivo);
 
           if (contenidoArchivoY) {
@@ -291,10 +368,15 @@ export class CompilerService {
               const astNuevoY = MainParser.parse(contenidoArchivoY);
 
               if (astNuevoY.globales && astNuevoY.globales.length > 0) {
-                await this.ejecutarBloque(astNuevoY.globales, this.globalST);
+                // Al cargar un archivo nuevo, le pasamos la ruta nueva como filePath
+                await this.ejecutarBloque(astNuevoY.globales, this.globalST, rutaArchivo);
               }
               if (astNuevoY.main && astNuevoY.main.cuerpo) {
-                ultimoResultado = await this.ejecutarBloque(astNuevoY.main.cuerpo, this.globalST);
+                ultimoResultado = await this.ejecutarBloque(
+                  astNuevoY.main.cuerpo,
+                  this.globalST,
+                  rutaArchivo,
+                );
               }
 
               console.log(`Archivo ${rutaArchivo} cargado y ejecutado con éxito.`);
@@ -305,15 +387,17 @@ export class CompilerService {
                 0,
                 'Sintáctico',
                 `Error al parsear el archivo cargado: ${error.message}`,
+                filePath,
               );
             }
           } else {
             this.registrarError(
               rutaArchivo,
-              0,
-              0,
+              inst.linea || 0,
+              inst.columna || 0,
               'Semántico',
               `No se encontró el archivo .y para cargar`,
+              filePath,
             );
           }
           break;
@@ -326,6 +410,7 @@ export class CompilerService {
     return this.astComponentes.find((comp) => comp.nombre === nombreComponente) || null;
   }
 
+  // --- EVALUADOR DE EXPRESIONES ---
   private async evaluarExpresion(exp: any, tabla: SymbolTable): Promise<any> {
     if (exp.tipo === 'LITERAL') return exp.val;
 
@@ -395,30 +480,12 @@ export class CompilerService {
     return null;
   }
 
-  private registrarError(
-    lex: string,
-    lin: number,
-    col: number,
-    tipo: string,
-    desc: string,
-    archivo: string = 'main.y',
-  ) {
-    this.reporteErrores.push({
-      lexema: lex,
-      linea: lin,
-      columna: col,
-      tipo: tipo,
-      descripcion: desc,
-      archivo: archivo, // <--- Guardamos el archivo
-    });
-  }
-
+  // --- PROCESAMIENTO DE IMPORTACIONES ---
   private processStyles(content: string, nombreArchivo: string) {
     try {
       const ast = StylesParser.parse(content);
       this.astEstilos = this.astEstilos.concat(ast);
     } catch (e: any) {
-      // Mandamos el nombreArchivo al registro de errores
       this.registrarError('Importación', 0, 0, 'Sintáctico', e.message, nombreArchivo);
     }
   }
@@ -455,6 +522,7 @@ export class CompilerService {
     }
   }
 
+  // --- GENERACIÓN HTML ---
   public descargarHTML() {
     const cssFinal = this.stylesService?.generarCSS(this.astEstilos ?? []) ?? '';
     const plantilla = `
@@ -484,7 +552,44 @@ export class CompilerService {
     a.click();
   }
 
+  // --- UTILIDADES ---
   public getSimbolosActuales(): Symbol[] {
     return this.globalST.getAllSymbols();
+  }
+
+  private registrarError(
+    lex: string,
+    lin: number,
+    col: number,
+    tipo: string,
+    desc: string,
+    archivo: string = 'main.y',
+  ) {
+    const nuevoError = {
+      lexema: lex,
+      linea: lin,
+      columna: col,
+      tipo: tipo,
+      descripcion: desc,
+      archivo: archivo,
+    };
+
+    // El spread operator crea una nueva referencia en memoria para el arreglo
+    this.reporteErrores = [...this.reporteErrores, nuevoError];
+  }
+
+  public getHighlighterLexer() {
+    if (HighlighterLexer && typeof HighlighterLexer.setInput === 'function') {
+      return HighlighterLexer;
+    } else if (HighlighterLexer.lexer && typeof HighlighterLexer.lexer.setInput === 'function') {
+      return HighlighterLexer.lexer;
+    } else if (
+      HighlighterLexer.parser?.lexer &&
+      typeof HighlighterLexer.parser.lexer.setInput === 'function'
+    ) {
+      return HighlighterLexer.parser.lexer;
+    }
+
+    return HighlighterLexer.default?.lexer || HighlighterLexer.default || HighlighterLexer;
   }
 }
