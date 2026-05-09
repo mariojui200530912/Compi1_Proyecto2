@@ -1,0 +1,57 @@
+<div class="text-light h-100 overflow-auto">
+  
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h6 class="text-uppercase text-muted m-0">Explorador</h6>
+    
+    <div class="btn-group">
+      <button class="btn btn-outline-danger btn-sm" (click)="nuevoProyecto()" title="Nuevo Proyecto (Limpiar Todo)">✨</button>
+      
+      <button class="btn btn-outline-light btn-sm" (click)="promptNewFile()" title="Nuevo Archivo">➕</button>
+      <button class="btn btn-outline-light btn-sm" (click)="promptNewFolder()" title="Nueva Carpeta">📁</button>
+      <button class="btn btn-outline-light btn-sm" (click)="fileInput.click()" title="Importar Archivos">📥</button>
+      <button class="btn btn-outline-success btn-sm border-start-0" (click)="guardarProyecto()" title="Guardar Proyecto">💾</button>
+      <button class="btn btn-outline-warning btn-sm" (click)="projectInput.click()" title="Cargar Proyecto">📂</button>
+    </div>
+  </div>
+
+  <input #fileInput type="file" (change)="onFileSelected($event)" multiple style="display: none;">
+  <input #projectInput type="file" accept=".yfera,.json" (change)="cargarProyecto($event)" style="display: none;">
+
+  <div class="small text-info mb-2 border-bottom border-secondary pb-1">
+    Destino: <span class="text-white">{{ fileService.selectedFolderPath() }}</span>
+  </div>
+
+  <div class="d-flex align-items-center py-2 pe-2 mb-2 border-bottom border-dark" style="padding-left: 10px;">
+    <div class="d-flex align-items-center overflow-hidden">
+      <span class="me-2 fs-5">🛢️</span> <span class="text-success fw-bold" style="font-size: 0.85rem; letter-spacing: 0.5px;">
+        YFERA_DB (En Memoria)
+      </span>
+    </div>
+  </div>
+
+  <div *ngFor="let item of visibleFiles()" 
+       class="d-flex align-items-center py-1 pe-2 cursor-pointer explorer-item justify-content-between"
+       [style.padding-left.px]="(getDepth(item.path) * 20) + 10"
+       [class.bg-primary]="fileService.activeFile()?.path === item.path"
+       [class.bg-opacity-25]="fileService.activeFile()?.path === item.path"
+       (click)="selectItem(item)">
+    
+    <div class="d-flex align-items-center overflow-hidden">
+      <span class="me-2 text-warning" *ngIf="item.type === 'folder'">
+        {{ openFolders().has(item.path) ? '📂' : '📁' }}
+      </span>
+      <span class="me-2 text-info" *ngIf="item.type === 'file'">📄</span>
+      <span class="text-truncate" style="font-size: 0.85rem;">{{ item.name }}</span>
+    </div>
+
+    <div class="action-buttons shadow-sm">
+      <button class="btn btn-link btn-sm p-0 px-1 text-light text-decoration-none" (click)="renameItem($event, item)" title="Renombrar">
+        ✏️
+      </button>
+      <button class="btn btn-link btn-sm p-0 px-1 text-danger text-decoration-none" (click)="deleteItem($event, item.path)" title="Eliminar">
+        🗑️
+      </button>
+    </div>
+  </div>
+
+</div>

@@ -1,0 +1,129 @@
+<div class="row g-0 vh-100 overflow-hidden bg-dark">
+  
+  <div class="col-md-3 d-flex flex-column border-end border-secondary h-100" style="background-color: #252526 !important;">
+    
+    <div class="p-3 border-bottom border-secondary flex-shrink-0 d-flex align-items-center" style="min-height: 60px; background-color: #1e1e1e;">
+      <h5 class="m-0 text-primary fw-bold" style="letter-spacing: 1px;">IDE YFERA</h5>
+    </div>
+
+    <div class="flex-grow-1 overflow-auto p-3">
+      <yfera-file-explorer></yfera-file-explorer>
+    </div>
+    
+  </div>
+
+  <div class="col-md-9 bg-dark text-light d-flex flex-column h-100 p-0 overflow-hidden">
+    
+    <div class="d-flex justify-content-between align-items-center border-bottom border-secondary pe-2 flex-shrink-0" style="min-height: 40px; background-color: #2d2d2d;">
+      
+      <div class="d-flex overflow-auto h-100">
+        <div *ngFor="let file of fileService.openFiles()" 
+             class="px-3 py-2 border-end border-secondary d-flex align-items-center cursor-pointer text-nowrap"
+             [class.bg-dark]="fileService.activeFile()?.path === file.path"
+             [style.border-top]="fileService.activeFile()?.path === file.path ? '2px solid #007acc' : '2px solid transparent'"
+             (click)="fileService.openFile(file)">
+          <span class="me-2" style="font-size: 0.8rem;">📄</span>
+          <span class="me-3" style="font-size: 0.85rem;">{{ file.name }}</span>
+          <span class="text-muted hover-white" (click)="closeTab($event, file.path)" style="font-size: 0.7rem; cursor: pointer;">✕</span>
+        </div>
+      </div>
+      
+      <button class="btn btn-success btn-sm fw-bold px-3 d-flex align-items-center" style="font-size: 0.75rem; height: 26px;" (click)="onCompile()">
+        ▶ Compilar
+      </button>
+    </div>
+
+    <ng-container *ngIf="fileService.activeFile() as file; else sinArchivo">
+      <div class="flex-grow-1 d-flex overflow-hidden" style="background-color: #282c34; min-height: 0;">
+        
+        <div #lineNumbersDiv class="text-end pe-3 pt-3 user-select-none font-monospace flex-shrink-0" 
+             style="min-width: 45px; background-color: #282c34; color: #5c6370; overflow: hidden; font-size: 14px; line-height: 1.5; border-right: 1px solid #3e4451;">
+          <div *ngFor="let line of lineCount()">{{ line }}</div>
+        </div>
+
+        <div class="code-area flex-grow-1 w-100 h-100 position-relative">
+          <div class="editor-highlight" [innerHTML]="file.content | highlightYfera"></div>
+          <textarea #editorTextarea 
+            class="editor-input shadow-none" 
+            [ngModel]="file.content" 
+            (ngModelChange)="onContentChange($event)" 
+            (scroll)="syncScroll(editorTextarea, lineNumbersDiv)" 
+            (keydown.tab)="handleTab($event)"
+            spellcheck="false" 
+            wrap="off">
+          </textarea>
+        </div>
+        
+      </div>
+    </ng-container>
+
+    <ng-template #sinArchivo>
+      <div class="flex-grow-1 d-flex flex-column align-items-center justify-content-center" style="background-color: #1e1e1e; min-height: 0;">
+        <h2 class="opacity-25 mb-3 text-light">YFERA</h2>
+        <p class="text-light opacity-75">Selecciona un archivo para comenzar.</p>
+      </div>
+    </ng-template>
+
+    <div class="border-top border-secondary d-flex flex-column flex-shrink-0" style="height: 35%; background-color: #252526; position: relative; z-index: 100;">
+      
+      <ul class="nav nav-tabs border-secondary px-2 pt-2 flex-shrink-0" style="font-size: 0.85rem; background-color: #2d2d2d;">
+        <li class="nav-item">
+          <button class="nav-link border-secondary border-bottom-0 py-1" [class.active]="activeBottomTab === 'errores'" (click)="activeBottomTab = 'errores'">Errores</button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link border-secondary border-bottom-0 py-1" [class.active]="activeBottomTab === 'simbolos'" (click)="activeBottomTab = 'simbolos'">Símbolos</button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link border-secondary border-bottom-0 py-1" [class.active]="activeBottomTab === 'sql'" (click)="activeBottomTab = 'sql'">Consola SQL</button>
+        </li>
+      </ul>
+
+      <div class="d-flex flex-column flex-grow-1 bg-dark overflow-hidden">
+        
+        <div *ngIf="activeBottomTab === 'errores'" class="p-2 h-100 overflow-auto">
+           <app-error-report *ngIf="listaErrores.length > 0" [errores]="listaErrores"></app-error-report>
+           <div *ngIf="listaErrores.length === 0" class="text-success text-center py-4">✔ Sin errores detectados.</div>
+        </div>
+
+        <div *ngIf="activeBottomTab === 'simbolos'" class="p-2 h-100 overflow-auto text-center">
+           <app-symbol-table></app-symbol-table>
+        </div>
+
+        <div *ngIf="activeBottomTab === 'sql'" class="d-flex flex-column h-100 w-100">
+          
+          <div class="flex-grow-1 p-3 overflow-auto font-monospace sql-scroll-container" style="font-size: 0.85rem; min-height: 0;">
+            <div *ngIf="sqlHistory.length === 0" style="color: #6a9955; font-style: italic;">
+              -- Consola SQL activa. Presiona Enter para ejecutar.
+            </div>
+            <div *ngFor="let item of sqlHistory" class="mb-3">
+              <div class="text-info">> {{ item.query }}</div>
+              <div *ngIf="item.result.type === 'error'" class="text-danger mt-1">❌ {{ item.result.message }}</div>
+              <div *ngIf="item.result.type === 'success'" class="text-success mt-1">✔ {{ item.result.message }}</div>
+              <div *ngIf="item.result.type === 'data'" class="mt-2 overflow-auto">
+                <table class="table table-dark table-sm table-bordered border-secondary m-0" style="width: max-content;">
+                  <thead><tr><th *ngFor="let col of item.result.columns" class="text-warning bg-dark">{{ col }}</th></tr></thead>
+                  <tbody><tr *ngFor="let row of item.result.values"><td *ngFor="let val of row">{{ val }}</td></tr></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          
+          <div class="px-3 py-2 bg-dark border-top border-secondary d-flex align-items-center flex-shrink-0" style="background-color: #1e1e1e !important; cursor: text;" (click)="focusSqlInput()">
+            <span class="text-success me-2 fw-bold user-select-none" style="font-size: 1.1rem;">$</span>
+            <input id="sqlConsoleInput" type="text" 
+                   class="flex-grow-1 bg-transparent text-light border-0 shadow-none font-monospace p-0"
+                   style="outline: none;"
+                   [(ngModel)]="sqlQuery" 
+                   (keyup.enter)="ejecutarSQLConsole()" 
+                   placeholder="Escribe un comando SQL..." 
+                   autocomplete="off"
+                   spellcheck="false">
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>

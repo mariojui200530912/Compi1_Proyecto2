@@ -1,0 +1,40 @@
+<div class="table-container shadow-lg rounded">
+  <table class="table table-dark table-hover mb-0">
+    <thead class="table-secondary text-dark">
+      <tr>
+        <th>#</th>
+        <th>Lexema / Token</th>
+        <th>Archivo</th>
+        <th>Línea</th>
+        <th>Columna</th>
+        <th>Tipo de Error</th>
+        <th>Descripción</th>
+      </tr>
+    </thead>
+    <tbody class="bg-error">
+      <tr *ngFor="let err of errores; let i = index">
+        <td>{{ i + 1 }}</td>
+        <td class="fw-bold text-info">` {{ err.lexema }} `</td>
+        <td><span class="badge bg-secondary">{{ err.archivo }}</span></td>
+        <td>{{ err.linea }}</td>
+        <td>{{ err.columna }}</td>
+        <td>
+          <span [ngClass]="{
+            'text-lexico': err.tipo === 'Léxico',
+            'text-sintactico': err.tipo === 'Sintáctico',
+            'text-semantico': err.tipo === 'Semántico'
+          }">
+            {{ err.tipo }}
+          </span>
+        </td>
+        <td class="fst-italic text-secondary">{{ err.descripcion }}</td>
+      </tr>
+      <!-- Fila si no hay errores -->
+      <tr *ngIf="errores.length === 0">
+        <td colspan="6" class="text-center text-success py-3">
+          ¡Sin errores detectados! El código es válido.
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>

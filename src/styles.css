@@ -1,1 +1,28 @@
 /* You can add global styles to this file, and also import other style files */
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: #1e1e1e !important; /* El color de fondo de VS Code */
+  color: #cccccc;
+  overflow: hidden; /* Evita cualquier scroll fantasma a nivel global */
+}
+
+/* Opcional: Estilizar las barras de scroll para que parezcan de un IDE real (Webkit) */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1e1e1e;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #424242;
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #4f4f4f;
+}

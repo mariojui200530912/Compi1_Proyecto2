@@ -1,0 +1,20 @@
+.symbol-container {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.table {
+  font-size: 0.9rem;
+}
+
+.bg-violet {
+  background-color: #6f42c1;
+  color: white;
+}
+
+.table-dark {
+  background-color: #21252b !important;
+}
+
+.font-monospace {
+  color: #98c379 !important; /* Color verde tipo código */
+}

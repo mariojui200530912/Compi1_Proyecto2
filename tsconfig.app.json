@@ -3,8 +3,10 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "./out-tsc/app",
-    "types": []
+    "rootDir": "./",
+    "outDir": ".dist/out-tsc",
+    "types": ["node"],
+    "allowJs": true
   },
   "include": [
     "src/**/*.ts"
